@@ -14,10 +14,12 @@ using System;
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-// Cloud API asynchronous "PDF To XML" job example.
+// Cloud API asynchronous "Barcode Reader" job example.
 // Allows to avoid timeout errors when processing huge or scanned PDF documents.
+
 
 namespace ByteScoutWebApiExample
 {
@@ -27,18 +29,17 @@ namespace ByteScoutWebApiExample
 		
 		// The authentication key (API Key).
 		// Get your own by registering at https://secure.bytescout.com/users/sign_up
-		const String API_KEY = "pdfco_fn4gg4niugnsdfnungjkfomopacirbgga";
+		const String API_KEY = "***********************************";
 		
-		// Direct URL of source PDF file.
-		const string SourceFileUrl = "https://s3-us-west-2.amazonaws.com/bytescout-com/files/demo-files/cloud-api/pdf-to-text/long-processed-document.pdf";
+		// Direct URL of source file (image or PDF) to search barcodes in.
+		const string SourceFileURL = "https://s3-us-west-2.amazonaws.com/bytescout-com/files/demo-files/cloud-api/barcode-reader/sample.pdf";
+		// Comma-separated list of barcode types to search. 
+		// See valid barcode types in the documentation https://secure.bytescout.com/cloudapi.html#api-Default-barcodeReadFromUrlGet
+		const string BarcodeTypes = "Code128,Code39,Interleaved2of5,EAN13";
 		// Comma-separated list of page indices (or ranges) to process. Leave empty for all pages. Example: '0,2-5,7-'.
 		const string Pages = "";
-		// PDF document password. Leave empty for unprotected documents.
-		const string Password = "";
-		// Destination XML file name
-		const string DestinationFile = @".\result.xml";
 		// (!) Make asynchronous job
-		private const bool Async = true;
+		const bool Async = true;
 
 		static void Main(string[] args)
 		{
@@ -48,13 +49,11 @@ namespace ByteScoutWebApiExample
 			// Set API Key
 			webClient.Headers.Add("x-api-key", API_KEY);
 
-			// Prepare URL for `PDF To XML` API call
-			string query = Uri.EscapeUriString(string.Format(
-				"https://bytescout.io/v1/pdf/convert/to/xml?name={0}&password={1}&pages={2}&url={3}&async={4}",
-				Path.GetFileName(DestinationFile),
-				Password,
+			// Prepare URL for `Barcode Reader` API call
+			string query = Uri.EscapeUriString(string.Format("https://bytescout.io/v1/barcode/read/from/url?types={0}&pages={1}&url={2}&async={3}", 
+				BarcodeTypes,
 				Pages,
-				SourceFileUrl,
+				SourceFileURL, 
 				Async));
 
 			try
@@ -67,11 +66,14 @@ namespace ByteScoutWebApiExample
 
 				if (json["error"].ToObject<bool>() == false)
 				{
-					// Asyncronous job ID
+					// Asynchronous job ID
 					string jobId = json["jobId"].ToString();
-					// URL of generated XML file that will be available after the job completion
+					// URL of generated JSON file with decoded barcodes that will available after the job completion
 					string resultFileUrl = json["url"].ToString();
 
+					// Check the job status in a loop. 
+					// If you don't want to pause the main thread you can rework the code 
+					// to use a separate thread for the status checking and completion.
 					do
 					{
 						string status = CheckJobStatus(jobId); // Possible statuses: "InProgress", "Failed", "Aborted", "Finished".
@@ -81,10 +83,22 @@ namespace ByteScoutWebApiExample
 
 						if (status == "Finished")
 						{
-							// Download XML file
-							webClient.DownloadFile(resultFileUrl, DestinationFile);
+							// Download JSON results file as string
+							string jsonFileString = webClient.DownloadString(resultFileUrl);
 
-							Console.WriteLine("Generated XML file saved as \"{0}\" file.", DestinationFile);
+							JArray jsonFoundBarcodes = JArray.Parse(jsonFileString);
+							
+							// Display found barcodes in console
+							foreach (JToken token in jsonFoundBarcodes)
+							{
+								Console.WriteLine("Found barcode:");
+								Console.WriteLine("  Type: " + token["TypeName"]);
+								Console.WriteLine("  Value: " + token["Value"]);
+								Console.WriteLine("  Document Page Index: " + token["Page"]);
+								Console.WriteLine("  Rectangle: " + token["Rect"]);
+								Console.WriteLine("  Confidence: " + token["Confidence"]);
+								Console.WriteLine();
+							}
 							break;
 						}
 						else if (status == "InProgress")
@@ -92,7 +106,7 @@ namespace ByteScoutWebApiExample
 							// Pause for a few seconds
 							Thread.Sleep(3000);
 						}
-						else 
+						else
 						{
 							Console.WriteLine(status);
 							break;
@@ -102,11 +116,13 @@ namespace ByteScoutWebApiExample
 				}
 				else
 				{
+					// Display service reported error
 					Console.WriteLine(json["message"].ToString());
 				}
 			}
 			catch (WebException e)
 			{
+				// Display request error
 				Console.WriteLine(e.ToString());
 			}
 
