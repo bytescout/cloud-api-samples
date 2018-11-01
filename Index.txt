@@ -302,6 +302,7 @@
 \PDF To Excel\PHP
 \PDF To Excel\PowerShell
 \PDF To Excel\VB.NET
+\PDF To Excel\C#\Advanced Conversion Options
 \PDF To Excel\C#\Convert PDF To XLS From Uploaded File
 \PDF To Excel\C#\Convert PDF To XLS From URL
 \PDF To Excel\C#\Convert PDF To XLS From URL Asynchronously
