@@ -304,6 +304,7 @@
 \PDF To Excel\VB.NET
 \PDF To Excel\C#\Advanced Conversion Options
 \PDF To Excel\C#\Convert PDF To XLS From Uploaded File
+\PDF To Excel\C#\Convert PDF To XLS From Uploaded File (WinForms)
 \PDF To Excel\C#\Convert PDF To XLS From URL
 \PDF To Excel\C#\Convert PDF To XLS From URL Asynchronously
 \PDF To Excel\C#\Convert PDF To XLSX From Uploaded File
@@ -329,6 +330,7 @@
 \PDF To Excel\PowerShell\Convert PDF To XLSX From URL
 \PDF To Excel\PowerShell\Convert PDF To XLSX From URL Asynchronously
 \PDF To Excel\VB.NET\Convert PDF To XLS From Uploaded File
+\PDF To Excel\VB.NET\Convert PDF To XLS From Uploaded File (WinForms)
 \PDF To Excel\VB.NET\Convert PDF To XLS From URL
 \PDF To Excel\VB.NET\Convert PDF To XLS From URL Asynchronously
 \PDF To Excel\VB.NET\Convert PDF To XLSX From Uploaded File
